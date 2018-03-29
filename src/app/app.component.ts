@@ -53,6 +53,49 @@ export class MyApp {
       this.splashScreen.hide();
     });
     this.initTranslate();
+
+    this.initSubscription();
+  }
+
+  initSubscription() {
+    function getSubscription() {
+      return navigator.serviceWorker.ready
+        .then(function(registration) {
+          return registration.pushManager.getSubscription();
+        });
+    }
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/')
+      ;
+      const rawData = window.atob(base64);
+      return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+    }
+    function subscribe() {
+      navigator.serviceWorker.ready.then(async function(registration) {
+        const vapidPublicKey = 'BCD8G8u9VhvOt6HDo1qfmWbMRcTR7jWY-I9V08t4QvVpZg66GeF-rrwYWezijUPCS2fafDIkYw_aODtcueman04';\
+        // needs to be converted
+        const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+        return registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: convertedVapidKey
+        });
+      }).then(function(subscription) {
+        console.log('Subscribed', subscription.endpoint);
+        return fetch('register', {
+          method: 'post',
+          headers: {
+            'Content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            subscription: subscription
+          })
+        });
+      }).then(args => console.log(args));
+    }
+    return subscribe();
   }
 
   initTranslate() {
