@@ -71,12 +71,13 @@ export class MyApp {
         .replace(/_/g, '/')
       ;
       const rawData = window.atob(base64);
-      return Uint8Array.from([...rawData].map((char) => char.charCodeAt(0)));
+      return Uint8Array.from(Array.from(rawData).map((char) => char.charCodeAt(0)));
     }
     function subscribe() {
+      const PUSH_SERVER = 'http://localhost:3000/push';
       navigator.serviceWorker.ready.then(async function(registration) {
-        const vapidPublicKey = 'BCD8G8u9VhvOt6HDo1qfmWbMRcTR7jWY-I9V08t4QvVpZg66GeF-rrwYWezijUPCS2fafDIkYw_aODtcueman04';\
-        // needs to be converted
+        const response = await fetch(`${PUSH_SERVER}/vapidPublicKey`);
+        const vapidPublicKey = await response.text();
         const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
         return registration.pushManager.subscribe({
           userVisibleOnly: true,
@@ -84,7 +85,7 @@ export class MyApp {
         });
       }).then(function(subscription) {
         console.log('Subscribed', subscription.endpoint);
-        return fetch('register', {
+        return fetch(`${PUSH_SERVER}/register/studentId`, {
           method: 'post',
           headers: {
             'Content-type': 'application/json'
